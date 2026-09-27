@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0B0F19">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NightFlow">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <title>NightFlow - 夜のルーティン＆タスク管理</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        night: {
+                            900: '#0B0F19',
+                            800: '#111827',
+                            700: '#1F2937',
+                            600: '#374151',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4B5563;
+        }
+
+        .view-wrapper-mobile {
+            max-width: 420px;
+            margin: 0 auto;
+            border: 8px solid #1F2937;
+            border-radius: 36px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            background-color: #0B0F19;
+            min-height: 840px;
+        }
+
+        .view-wrapper-mobile .pc-only-layout {
+            display: none !important;
+        }
+
+        .view-wrapper-pc {
+            max-width: 1400px;
+            margin: 0 auto;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .view-wrapper-pc .mobile-only-layout {
+            display: none !important;
+        }
+
+        :root {
+            --color-accent-primary: #F59E0B;
+            --color-accent-secondary: #D97706;
+            --color-accent-light: #FCD34D;
+            --color-accent-glow: rgba(245, 158, 11, 0.25);
+            --color-accent-subtle: rgba(245, 158, 11, 0.15);
+            --color-accent-border: rgba(245, 158, 11, 0.3);
+        }
+
+        .theme-accent-bg { background-color: var(--color-accent-primary) !important; }
+        .theme-accent-text { color: var(--color-accent-primary) !important; }
+        .theme-accent-border { border-color: var(--color-accent-primary) !important; }
+        .theme-accent-border-subtle { border-color: var(--color-accent-border) !important; }
+        .theme-accent-gradient { background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary)) !important; }
+        .theme-accent-subtle-bg { background-color: var(--color-accent-subtle) !important; }
+        .theme-accent-glow-box { box-shadow: 0 0 20px var(--color-accent-glow) !important; }
+    
+        @media (max-width: 767px) {
+            body { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+            header { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+            button, input, select { -webkit-tap-highlight-color: transparent; }
+        }
+    </style>
+</head>
+<body class="pb-12 text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950">
+
+    <header class="sticky top-0 z-40 bg-night-900/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- View Mode selector aligned to the left -->
+            <div class="flex items-center space-x-2.5">
+                <div class="flex items-center bg-night-800 p-1 rounded-xl border border-slate-700/60 shadow-inner">
+                    <span class="text-xs text-slate-400 font-medium px-2 hidden sm:inline"><i class="fa-solid fa-display mr-1"></i>表示:</span>
+                    <button id="view-btn-auto" onclick="setViewMode('auto')" class="px-2.5 py-1 text-xs rounded-lg font-medium transition-all duration-200 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-bolt mr-1"></i>自動
+                    </button>
+                    <button id="view-btn-mobile" onclick="setViewMode('mobile')" class="px-2.5 py-1 text-xs rounded-lg font-medium transition-all duration-200 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-mobile-screen-button mr-1"></i>スマホ
+                    </button>
+                    <button id="view-btn-pc" onclick="setViewMode('pc')" class="px-2.5 py-1 text-xs rounded-lg font-medium transition-all duration-200 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-desktop mr-1"></i>PC
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Right side controls: doubled size timer & complete buttons, home button, reset -->
+            <div class="flex items-center space-x-3 flex-wrap ml-auto">
+                <div class="flex items-center bg-night-800/95 border border-slate-700/80 rounded-2xl px-5 py-3 gap-5 shadow-2xl">
+                    <button id="header-timer-toggle-btn" onclick="toggleTimer()" class="w-20 h-20 rounded-2xl theme-accent-bg text-slate-950 flex items-center justify-center font-bold text-2xl active:scale-95 transition-all shadow-md" title="タイマー開始/一時停止">
+                        <i id="header-timer-toggle-icon" class="fa-solid fa-play text-2xl"></i>
+                    </button>
+                    <div class="text-3xl font-mono font-bold theme-accent-text" id="header-timer-display">
+                        30:00
+                    </div>
+                    <button onclick="completeCurrentTask()" class="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-lg font-bold shadow-xl transition-all active:scale-95">
+                        <i class="fa-solid fa-check mr-2 text-xl"></i>完了
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="triggerHomeNow()" class="px-4 py-3 rounded-xl theme-accent-gradient hover:opacity-90 text-slate-950 font-bold text-xs sm:text-sm flex items-center shadow-lg theme-accent-glow-box active:scale-95 transition-all">
+                        <i class="fa-solid fa-person-walking-arrow-loop-left mr-1.5 text-base"></i>
+                        <span>今から帰宅</span>
+                    </button>
+                    <button onclick="resetDailyProgress()" class="px-3.5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 text-xs border border-slate-700/80 flex items-center transition-all" title="本日の達成状況をクリア">
+                        <i class="fa-solid fa-rotate-left mr-1.5 theme-accent-text"></i>
+                        <span>進捗リセット</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto mt-3 pt-3 border-t border-slate-800/80">
+            <div class="bg-night-800/90 border border-slate-800 rounded-2xl px-4 py-2.5 shadow-lg">
+                <div class="flex justify-between items-center text-xs mb-1.5">
+                    <span class="text-slate-400 font-medium flex items-center gap-1.5"><i class="fa-solid fa-chart-pie theme-accent-text"></i>本日のルーティン達成率</span>
+                    <span id="overall-progress-text" class="font-bold theme-accent-text">0%</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                    <div id="overall-progress-bar" class="theme-accent-gradient h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-viewport-wrapper" class="max-w-7xl mx-auto px-2 sm:px-4 pt-4 transition-all duration-300">
+        
+        <div class="bg-night-800/90 border border-slate-800 rounded-2xl p-3 mb-5 shadow-lg flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 overflow-x-auto max-w-full">
+                <div id="preset-tabs-container" class="flex items-center gap-1.5"></div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-2 text-xs bg-night-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                    <span id="calc-type-badge" class="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">就寝逆算</span>
+                    <span id="schedule-summary-text" class="text-slate-300 font-mono">目標就寝: 23:30</span>
+                </div>
+                <button id="btn-switch-calc" onclick="toggleCalcMode()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 flex items-center transition-all">
+                    <i class="fa-solid fa-arrows-rotate mr-1.5 text-indigo-400"></i>
+                    <span id="btn-switch-calc-text">今すぐ順算に切替</span>
+                </button>
+                <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1.5" title="総合設定・コース編集">
+                    <i class="fa-solid fa-gear text-amber-400 text-sm"></i>
+                    <span class="text-xs font-medium text-slate-300 hidden sm:inline">設定・コース編集</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="pc-only-layout hidden lg:grid lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-4 space-y-5 sticky top-36">
+                <div class="bg-gradient-to-b from-night-800 to-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping mr-2"></span>
+                            進行中タスク
+                        </span>
+                        <span id="active-task-phase-badge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Phase 1</span>
+                    </div>
+                    <div class="text-center py-2">
+                        <h3 id="active-task-title" class="text-xl font-bold text-slate-100 mb-1">帰宅（移動）</h3>
+                        <p id="active-task-time-range" class="text-xs text-slate-400 mb-4">目安: 19:15 - 19:45 (30分)</p>
+                        <div class="relative w-36 h-36 mx-auto flex items-center justify-center my-2">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="72" cy="72" r="62" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent"/>
+                                <circle id="timer-progress-circle" cx="72" cy="72" r="62" stroke="currentColor" stroke-width="8" class="text-amber-500 transition-all duration-1000" fill="transparent" stroke-dasharray="389.5" stroke-dashoffset="0" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="timer-display" class="text-2xl font-mono font-bold text-slate-100">30:00</span>
+                                <span id="timer-label-sub" class="text-[10px] text-slate-400">残り時間</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center gap-3 mt-4">
+                            <button id="timer-toggle-btn" onclick="toggleTimer()" class="w-12 h-12 rounded-full theme-accent-bg text-slate-950 flex items-center justify-center shadow-lg theme-accent-glow-box active:scale-95 transition-all">
+                                <i id="timer-toggle-icon" class="fa-solid fa-play text-lg ml-0.5"></i>
+                            </button>
+                            <button onclick="resetTimer()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center border border-slate-700" title="タイマーリセット">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                            <button onclick="completeCurrentTask()" class="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center shadow-md">
+                                <i class="fa-solid fa-check mr-1.5"></i>完了
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-4" id="timeline-container-pc"></div>
+        </div>
+
+        <div class="mobile-only-layout block lg:hidden space-y-4">
+            <div id="timeline-container-mobile" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <div id="modal-settings" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-night-800 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between bg-night-900/50">
+                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-amber-400"></i>
+                    <span>設定・コース編集</span>
+                </h3>
+                <button onclick="closeModal('modal-settings')" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 flex-1" id="settings-modal-body"></div>
+            <div class="p-4 border-t border-slate-700 flex items-center justify-between bg-night-900/50">
+                <button onclick="resetAllData()" class="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs border border-red-500/30 flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>すべて初期化</span>
+                </button>
+                <button onclick="saveAllSettings()" class="px-5 py-2 rounded-xl theme-accent-gradient text-slate-950 font-bold text-xs shadow-lg">
+                    保存して閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-task-edit" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-night-800 border border-slate-700 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between bg-night-900/50">
+                <h3 id="modal-task-title-label" class="text-sm font-bold text-slate-100">タスクの編集</h3>
+                <button onclick="closeModal('modal-task-edit')" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="edit-task-id">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">フェーズ</label>
+                    <select id="select-task-phase" class="w-full bg-night-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"></select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">タスク名</label>
+                    <input type="text" id="input-task-title" class="w-full bg-night-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">所要時間（分）</label>
+                    <input type="number" id="input-task-duration" min="1" max="180" class="w-full bg-night-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-700 flex items-center justify-between bg-night-900/50">
+                <button id="btn-delete-task" onclick="deleteTaskFromModal()" class="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs border border-red-500/30">
+                    <i class="fa-solid fa-trash mr-1"></i>削除
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="closeModal('modal-task-edit')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">キャンセル</button>
+                    <button onclick="saveTaskEdit()" class="px-4 py-2 rounded-xl theme-accent-gradient text-slate-950 font-bold text-xs shadow">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-icon-picker" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-night-800 border border-slate-700 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between bg-night-900/50">
+                <h3 class="text-sm font-bold text-slate-100">アイコンを選択</h3>
+                <button onclick="closeModal('modal-icon-picker')" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 grid grid-cols-5 gap-2 max-h-64 overflow-y-auto" id="icon-picker-grid"></div>
+        </div>
+    </div>
+
+    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-night-800 border border-slate-700 rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h4 id="confirm-modal-message" class="text-sm font-semibold text-slate-200">確認メッセージ</h4>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button onclick="closeConfirmModal(false)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs w-full">いいえ</button>
+                <button onclick="closeConfirmModal(true)" class="px-4 py-2 rounded-xl theme-accent-gradient text-slate-950 font-bold text-xs w-full shadow">はい</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const THEME_COLORS = {
+            amber: { primary: '#F59E0B', secondary: '#D97706', light: '#FCD34D', glow: 'rgba(245, 158, 11, 0.25)', subtle: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)' },
+            cyan: { primary: '#06B6D4', secondary: '#0891B2', light: '#67E8F9', glow: 'rgba(6, 182, 212, 0.25)', subtle: 'rgba(6, 182, 212, 0.15)', border: 'rgba(6, 182, 212, 0.3)' },
+            purple: { primary: '#A855F7', secondary: '#9333EA', light: '#D8B4FE', glow: 'rgba(168, 85, 247, 0.25)', subtle: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)' },
+            emerald: { primary: '#10B981', secondary: '#059669', light: '#6EE7B7', glow: 'rgba(16, 185, 129, 0.25)', subtle: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)' }
+        };
+
+        const AVAILABLE_ICONS = [
+            'fa-moon', 'fa-house', 'fa-utensils', 'fa-bath', 'fa-book', 
+            'fa-bed', 'fa-music', 'fa-mug-hot', 'fa-person-walking', 'fa-laptop',
+            'fa-heart', 'fa-star', 'fa-shield-halved', 'fa-face-smile', 'fa-bolt'
+        ];
+
+        const DEFAULT_PRESETS = [
+            {
+                id: 'standard',
+                name: '標準ナイトコース',
+                bedtime: '23:30',
+                phases: [
+                    { id: 'ph_1', title: 'Phase 1: 帰宅＆リラックス', icon: 'fa-house', color: 'amber' },
+                    { id: 'ph_2', title: 'Phase 2: 入浴・ケア', icon: 'fa-bath', color: 'amber' },
+                    { id: 'ph_3', title: 'Phase 3: 就寝準備', icon: 'fa-bed', color: 'amber' }
+                ],
+                tasks: [
+                    { id: 't_1', phaseId: 'ph_1', title: '帰宅（移動）', duration: 30 },
+                    { id: 't_2', phaseId: 'ph_1', title: '手洗い・着替え・水分補給', duration: 15 },
+                    { id: 't_3', phaseId: 'ph_2', title: '入浴・スキンケア', duration: 45 },
+                    { id: 't_4', phaseId: 'ph_3', title: 'ストレッチ・リラックス', duration: 20 },
+                    { id: 't_5', phaseId: 'ph_3', title: '就寝準備・スマホOFF', duration: 15 }
+                ]
+            },
+            {
+                id: 'relax',
+                name: 'ゆったり自分磨きコース',
+                bedtime: '24:00',
+                phases: [
+                    { id: 'ph_r1', title: 'Phase 1: 帰宅・ディナー', icon: 'fa-utensils', color: 'purple' },
+                    { id: 'ph_r2', title: 'Phase 2: 趣味・バスタイム', icon: 'fa-book', color: 'purple' }
+                ],
+                tasks: [
+                    { id: 'tr_1', phaseId: 'ph_r1', title: '帰宅・夕食', duration: 60 },
+                    { id: 'tr_2', phaseId: 'ph_r2', title: '趣味の時間（読書等）', duration: 45 },
+                    { id: 'tr_3', phaseId: 'ph_r2', title: 'バスタイム・スキンケア', duration: 60 }
+                ]
+            }
+        ];
+
+        let appState = {
+            viewMode: 'auto',
+            activePresetId: 'standard',
+            theme: 'amber',
+            calcMode: 'reverse',
+            forwardStartTime: '19:00',
+            presets: JSON.parse(JSON.stringify(DEFAULT_PRESETS)),
+            completedTasksToday: {},
+            taskActualTimes: {},
+            timer: {
+                activeTaskId: null,
+                totalSeconds: 0,
+                secondsRemaining: 0,
+                isOvertime: false,
+                overtimeSeconds: 0,
+                isRunning: false,
+                intervalId: null
+            }
+        };
+
+        const STORAGE_KEY = 'nightflow_app_state_v6';
+
+        window.setViewMode = setViewMode;
+        window.triggerHomeNow = triggerHomeNow;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.resetDailyProgress = resetDailyProgress;
+        window.switchPreset = switchPreset;
+        window.toggleCalcMode = toggleCalcMode;
+        window.openSettingsModal = openSettingsModal;
+        window.toggleTimer = toggleTimer;
+        window.resetTimer = resetTimer;
+        window.completeCurrentTask = completeCurrentTask;
+        window.closeConfirmModal = closeConfirmModal;
+        window.applyTheme = applyTheme;
+        window.changeTheme = changeTheme;
+        window.renderSettingsModalContent = renderSettingsModalContent;
+        window.saveAllSettings = saveAllSettings;
+        window.addNewPresetInModal = addNewPresetInModal;
+        window.updatePresetName = updatePresetName;
+        window.deletePreset = deletePreset;
+        window.addNewPhaseInModal = addNewPhaseInModal;
+        window.updatePhaseTitle = updatePhaseTitle;
+        window.deletePhase = deletePhase;
+        window.openIconPickerForPhase = openIconPickerForPhase;
+        window.selectIconForPhase = selectIconForPhase;
+        window.openTaskAddModalForPhase = openTaskAddModalForPhase;
+        window.openTaskEditModal = openTaskEditModal;
+        window.saveTaskEdit = saveTaskEdit;
+        window.deleteTaskFromModal = deleteTaskFromModal;
+        window.resetAllData = resetAllData;
+        window.toggleTaskCompletion = toggleTaskCompletion;
+        window.selectActiveTask = selectActiveTask;
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                    if (!appState.presets || appState.presets.length === 0) {
+                        appState.presets = JSON.parse(JSON.stringify(DEFAULT_PRESETS));
+                    }
+                }
+            } catch (e) {
+                appState.presets = JSON.parse(JSON.stringify(DEFAULT_PRESETS));
+            }
+        }
+
+        function saveState() {
+            try {
+                const stateToSave = {
+                    viewMode: appState.viewMode,
+                    activePresetId: appState.activePresetId,
+                    theme: appState.theme,
+                    calcMode: appState.calcMode,
+                    forwardStartTime: appState.forwardStartTime,
+                    presets: appState.presets,
+                    completedTasksToday: appState.completedTasksToday,
+                    taskActualTimes: appState.taskActualTimes
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+            } catch (e) {}
+        }
+
+        function getCurrentPreset() {
+            return appState.presets.find(p => p.id === appState.activePresetId) || appState.presets[0];
+        }
+
+        function applyTheme(themeKey) {
+            appState.theme = themeKey;
+            const t = THEME_COLORS[themeKey] || THEME_COLORS.amber;
+            const root = document.documentElement;
+            root.style.setProperty('--color-accent-primary', t.primary);
+            root.style.setProperty('--color-accent-secondary', t.secondary);
+            root.style.setProperty('--color-accent-light', t.light);
+            root.style.setProperty('--color-accent-glow', t.glow);
+            root.style.setProperty('--color-accent-subtle', t.subtle);
+            root.style.setProperty('--color-accent-border', t.border);
+        }
+
+        function changeTheme(themeKey) {
+            applyTheme(themeKey);
+            renderSettingsModalContent();
+            renderApp();
+            saveState();
+        }
+
+        function setViewMode(mode) {
+            appState.viewMode = mode;
+            const wrapper = document.getElementById('app-viewport-wrapper');
+            ['auto', 'mobile', 'pc'].forEach(m => {
+                const btn = document.getElementById(`view-btn-${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = "px-2.5 py-1 text-xs rounded-lg font-medium transition-all duration-200 theme-accent-gradient text-slate-950 font-bold shadow-sm";
+                    } else {
+                        btn.className = "px-2.5 py-1 text-xs rounded-lg font-medium transition-all duration-200 text-slate-400 hover:text-white";
+                    }
+                }
+            });
+            wrapper.classList.remove('view-wrapper-mobile', 'view-wrapper-pc');
+            if (mode === 'mobile') wrapper.classList.add('view-wrapper-mobile');
+            else if (mode === 'pc') wrapper.classList.add('view-wrapper-pc');
+            else {
+                if (window.innerWidth < 1024) wrapper.classList.add('view-wrapper-mobile');
+                else wrapper.classList.add('view-wrapper-pc');
+            }
+            saveState();
+        }
+
+        function timeToMins(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function minsToTime(totalMins) {
+            let m = totalMins % (24 * 60);
+            if (m < 0) m += 24 * 60;
+            const h = Math.floor(m / 60);
+            const min = m % 60;
+            return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+        }
+
+        function getCurrentTimeString() {
+            const now = new Date();
+            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function calculateSchedule() {
+            const preset = getCurrentPreset();
+            const tasks = preset.tasks || [];
+            const completedMap = appState.completedTasksToday[preset.id] || {};
+            const actualTimesMap = appState.taskActualTimes[preset.id] || {};
+
+            let timeline = [];
+            if (appState.calcMode === 'reverse') {
+                let currentMins = timeToMins(preset.bedtime);
+                let calculated = [];
+                for (let i = tasks.length - 1; i >= 0; i--) {
+                    const task = tasks[i];
+                    const isCompleted = !!completedMap[task.id];
+                    const actualData = actualTimesMap[task.id];
+                    let duration = (actualData && actualData.actualMinutes !== undefined) ? actualData.actualMinutes : task.duration;
+                    const endMins = currentMins;
+                    const startMins = currentMins - duration;
+                    calculated.unshift({
+                        ...task,
+                        startMins,
+                        endMins,
+                        startTime: minsToTime(startMins),
+                        endTime: minsToTime(endMins),
+                        duration,
+                        isCompleted
+                    });
+                    currentMins = startMins;
+                }
+                timeline = calculated;
+            } else {
+                let currentMins = timeToMins(appState.forwardStartTime || getCurrentTimeString());
+                let calculated = [];
+                for (let i = 0; i < tasks.length; i++) {
+                    const task = tasks[i];
+                    const isCompleted = !!completedMap[task.id];
+                    const actualData = actualTimesMap[task.id];
+                    let duration = task.duration;
+                    if (actualData && actualData.actualMinutes !== undefined) {
+                        duration = actualData.actualMinutes;
+                    }
+                    const startMins = currentMins;
+                    const endMins = currentMins + duration;
+                    calculated.push({
+                        ...task,
+                        startMins,
+                        endMins,
+                        startTime: minsToTime(startMins),
+                        endTime: minsToTime(endMins),
+                        duration,
+                        isCompleted
+                    });
+                    currentMins = endMins;
+                }
+                timeline = calculated;
+            }
+            return timeline;
+        }
+
+        function renderApp() {
+            const preset = getCurrentPreset();
+            const timeline = calculateSchedule();
+
+            const tabsContainer = document.getElementById('preset-tabs-container');
+            if (tabsContainer) {
+                tabsContainer.innerHTML = appState.presets.map(p => {
+                    const isActive = p.id === appState.activePresetId;
+                    return `
+                        <button onclick="switchPreset('${p.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${isActive ? 'theme-accent-gradient text-slate-950 shadow-md theme-accent-glow-box' : 'bg-night-900 text-slate-300 hover:bg-slate-800 border border-slate-700/80'}">
+                            <i class="fa-solid fa-moon"></i>
+                            <span>${p.name}</span>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            const badge = document.getElementById('calc-type-badge');
+            const summaryText = document.getElementById('schedule-summary-text');
+            const switchBtnText = document.getElementById('btn-switch-calc-text');
+
+            if (appState.calcMode === 'reverse') {
+                if (badge) {
+                    badge.className = "px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
+                    badge.textContent = "就寝逆算";
+                }
+                if (summaryText) summaryText.textContent = `目標就寝: ${preset.bedtime}`;
+                if (switchBtnText) switchBtnText.textContent = "今すぐ順算に切替";
+            } else {
+                if (badge) {
+                    badge.className = "px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                    badge.textContent = "順算モード";
+                }
+                if (summaryText) summaryText.textContent = `開始基準: ${appState.forwardStartTime}`;
+                if (switchBtnText) switchBtnText.textContent = "逆算に戻す";
+            }
+
+            let activeTask = timeline.find(t => t.id === appState.timer.activeTaskId);
+            if (!activeTask) {
+                activeTask = timeline.find(t => !t.isCompleted) || timeline[0];
+                if (activeTask && !appState.timer.isRunning) {
+                    appState.timer.activeTaskId = activeTask.id;
+                    appState.timer.totalSeconds = activeTask.duration * 60;
+                    if (appState.timer.secondsRemaining <= 0 || appState.timer.secondsRemaining > appState.timer.totalSeconds) {
+                        appState.timer.secondsRemaining = appState.timer.totalSeconds;
+                    }
+                    appState.timer.isOvertime = false;
+                    appState.timer.overtimeSeconds = 0;
+                }
+            }
+
+            renderTimerCard(activeTask);
+
+            const totalTasks = timeline.length;
+            const completedCount = timeline.filter(t => t.isCompleted).length;
+            const progressPercent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+            
+            const progressBar = document.getElementById('overall-progress-bar');
+            const progressText = document.getElementById('overall-progress-text');
+            if (progressBar) progressBar.style.width = `${progressPercent}%`;
+            if (progressText) progressText.textContent = `${progressPercent}%`;
+
+            renderTimelineContainers(timeline);
+        }
+
+        function renderTimerCard(activeTask) {
+            const titleEl = document.getElementById('active-task-title');
+            const rangeEl = document.getElementById('active-task-time-range');
+            const displayEl = document.getElementById('timer-display');
+            const headerDisplayEl = document.getElementById('header-timer-display');
+            const subLabelEl = document.getElementById('timer-label-sub');
+            const phaseBadge = document.getElementById('active-task-phase-badge');
+            const toggleIcon = document.getElementById('timer-toggle-icon');
+            const headerToggleIcon = document.getElementById('header-timer-toggle-icon');
+            const circle = document.getElementById('timer-progress-circle');
+
+            const preset = getCurrentPreset();
+
+            if (!activeTask) {
+                if (titleEl) titleEl.textContent = "すべてのタスクが完了！";
+                if (rangeEl) rangeEl.textContent = "お疲れ様でした。ゆっくりお休みください。";
+                if (displayEl) {
+                    displayEl.textContent = "00:00";
+                    displayEl.classList.remove('text-red-500');
+                    displayEl.classList.add('theme-accent-text');
+                }
+                if (headerDisplayEl) {
+                    headerDisplayEl.textContent = "00:00";
+                    headerDisplayEl.classList.remove('text-red-500');
+                    headerDisplayEl.classList.add('theme-accent-text');
+                }
+                return;
+            }
+
+            if (titleEl) titleEl.textContent = activeTask.title;
+            if (rangeEl) rangeEl.textContent = `目安: ${activeTask.startTime} - ${activeTask.endTime} (${activeTask.duration}分)`;
+
+            const foundPhase = preset.phases.find(ph => ph.id === activeTask.phaseId);
+            if (phaseBadge) phaseBadge.textContent = foundPhase ? foundPhase.title : 'Phase';
+
+            let timeStr = "";
+            if (appState.timer.isOvertime) {
+                const omins = Math.floor(appState.timer.overtimeSeconds / 60);
+                const osecs = appState.timer.overtimeSeconds % 60;
+                timeStr = `+${String(omins).padStart(2, '0')}:${String(osecs).padStart(2, '0')}`;
+                if (subLabelEl) subLabelEl.textContent = "超過時間 (カウントアップ)";
+                
+                if (displayEl) {
+                    displayEl.textContent = timeStr;
+                    displayEl.classList.remove('theme-accent-text', 'text-slate-100');
+                    displayEl.classList.add('text-red-500', 'animate-pulse');
+                }
+                if (headerDisplayEl) {
+                    headerDisplayEl.textContent = timeStr;
+                    headerDisplayEl.classList.remove('theme-accent-text', 'text-slate-100');
+                    headerDisplayEl.classList.add('text-red-500', 'animate-pulse');
+                }
+            } else {
+                const mins = Math.floor(appState.timer.secondsRemaining / 60);
+                const secs = appState.timer.secondsRemaining % 60;
+                timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                if (subLabelEl) subLabelEl.textContent = "残り時間";
+                
+                if (displayEl) {
+                    displayEl.textContent = timeStr;
+                    displayEl.classList.remove('text-red-500', 'animate-pulse');
+                    displayEl.classList.add('theme-accent-text');
+                }
+                if (headerDisplayEl) {
+                    headerDisplayEl.textContent = timeStr;
+                    headerDisplayEl.classList.remove('text-red-500', 'animate-pulse');
+                    headerDisplayEl.classList.add('theme-accent-text');
+                }
+            }
+
+            const iconClass = appState.timer.isRunning ? "fa-solid fa-pause text-2xl" : "fa-solid fa-play text-2xl ml-0.5";
+            if (toggleIcon) toggleIcon.className = "fa-solid " + (appState.timer.isRunning ? "fa-pause" : "fa-play") + " text-lg";
+            if (headerToggleIcon) headerToggleIcon.className = iconClass;
+
+            if (circle && appState.timer.totalSeconds > 0) {
+                const radius = 62;
+                const circumference = 2 * Math.PI * radius;
+                let progress = 0;
+                if (!appState.timer.isOvertime) {
+                    progress = appState.timer.secondsRemaining / appState.timer.totalSeconds;
+                }
+                const offset = circumference - (progress * circumference);
+                circle.style.strokeDasharray = circumference;
+                circle.style.strokeDashoffset = offset;
+                if (appState.timer.isOvertime) {
+                    circle.classList.remove('text-amber-500');
+                    circle.classList.add('text-red-500');
+                } else {
+                    circle.classList.remove('text-red-500');
+                    circle.classList.add('text-amber-500');
+                }
+            }
+        }
+
+        function renderTimelineContainers(timeline) {
+            const preset = getCurrentPreset();
+            const pcContainer = document.getElementById('timeline-container-pc');
+            const mobileContainer = document.getElementById('timeline-container-mobile');
+
+            const phases = preset.phases || [];
+            let htmlContent = phases.map(phase => {
+                const phaseTasks = timeline.filter(t => t.phaseId === phase.id);
+                if (phaseTasks.length === 0) return '';
+
+                const tasksHtml = phaseTasks.map(task => {
+                    const isActive = appState.timer.activeTaskId === task.id;
+                    const isCompleted = task.isCompleted;
+
+                    return `
+                        <div onclick="selectActiveTask('${task.id}')" class="bg-night-900/90 border ${isActive ? 'theme-accent-border theme-accent-glow-box bg-slate-900/90 ring-1 ring-amber-500/40' : 'border-slate-800 hover:border-slate-700'} rounded-xl p-3.5 flex items-center justify-between gap-3 transition-all cursor-pointer">
+                            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                <button onclick="event.stopPropagation(); toggleTaskCompletion('${task.id}')" class="w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${isCompleted ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-bold' : 'border-slate-600 hover:border-amber-400 bg-night-800'}">
+                                    ${isCompleted ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+                                </button>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs sm:text-sm font-semibold truncate ${isCompleted ? 'line-through text-slate-500' : 'text-slate-100'}">${task.title}</span>
+                                        ${isActive ? '<span class="text-[9px] px-1.5 py-0.5 rounded theme-accent-subtle-bg theme-accent-text font-bold">選択中</span>' : ''}
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                        ${task.startTime} - ${task.endTime} (${task.duration}分)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                                <button onclick="openTaskEditModal('${task.id}')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs" title="編集">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-night-800/80 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                                <i class="fa-solid ${phase.icon || 'fa-moon'} theme-accent-text"></i>
+                                <span>${phase.title}</span>
+                            </h4>
+                            <button onclick="openTaskAddModalForPhase('${phase.id}')" class="text-xs px-2 py-1 rounded-lg bg-night-900 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i>タスク追加
+                            </button>
+                        </div>
+                        <div class="space-y-2">
+                            ${tasksHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (pcContainer) pcContainer.innerHTML = htmlContent;
+            if (mobileContainer) mobileContainer.innerHTML = htmlContent;
+        }
+
+        function switchPreset(presetId) {
+            appState.activePresetId = presetId;
+            appState.timer.isRunning = false;
+            if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+            appState.timer.activeTaskId = null;
+            appState.timer.isOvertime = false;
+            appState.timer.overtimeSeconds = 0;
+            renderApp();
+            saveState();
+        }
+
+        function toggleCalcMode() {
+            appState.calcMode = appState.calcMode === 'reverse' ? 'forward' : 'reverse';
+            if (appState.calcMode === 'forward') {
+                appState.forwardStartTime = getCurrentTimeString();
+            }
+            renderApp();
+            saveState();
+        }
+
+        function triggerHomeNow() {
+            appState.calcMode = 'forward';
+            appState.forwardStartTime = getCurrentTimeString();
+            
+            const timeline = calculateSchedule();
+            if (timeline.length > 0) {
+                const firstTask = timeline[0];
+                appState.timer.activeTaskId = firstTask.id;
+                appState.timer.totalSeconds = firstTask.duration * 60;
+                appState.timer.secondsRemaining = firstTask.duration * 60;
+                appState.timer.isOvertime = false;
+                appState.timer.overtimeSeconds = 0;
+                
+                appState.timer.isRunning = true;
+                if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+                
+                appState.timer.intervalId = setInterval(() => {
+                    if (!appState.timer.isOvertime) {
+                        if (appState.timer.secondsRemaining > 0) {
+                            appState.timer.secondsRemaining--;
+                        } else {
+                            appState.timer.isOvertime = true;
+                            appState.timer.overtimeSeconds = 1;
+                        }
+                    } else {
+                        appState.timer.overtimeSeconds++;
+                    }
+                    renderTimerCard(calculateSchedule().find(t => t.id === appState.timer.activeTaskId));
+                }, 1000);
+            }
+            
+            renderApp();
+            saveState();
+        }
+
+        function selectActiveTask(taskId) {
+            const timeline = calculateSchedule();
+            const task = timeline.find(t => t.id === taskId);
+            if (!task) return;
+
+            appState.timer.activeTaskId = task.id;
+            appState.timer.totalSeconds = task.duration * 60;
+            appState.timer.secondsRemaining = task.duration * 60;
+            appState.timer.isOvertime = false;
+            appState.timer.overtimeSeconds = 0;
+            appState.timer.isRunning = false;
+            if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+
+            renderApp();
+        }
+
+        function toggleTaskCompletion(taskId) {
+            const presetId = getCurrentPreset().id;
+            if (!appState.completedTasksToday[presetId]) {
+                appState.completedTasksToday[presetId] = {};
+            }
+            const current = !!appState.completedTasksToday[presetId][taskId];
+            appState.completedTasksToday[presetId][taskId] = !current;
+
+            renderApp();
+            saveState();
+        }
+
+        function toggleTimer() {
+            if (appState.timer.isRunning) {
+                appState.timer.isRunning = false;
+                if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+            } else {
+                appState.timer.isRunning = true;
+                if (appState.timer.secondsRemaining <= 0 && !appState.timer.isOvertime) {
+                    const timeline = calculateSchedule();
+                    const activeTask = timeline.find(t => t.id === appState.timer.activeTaskId);
+                    if (activeTask) appState.timer.secondsRemaining = activeTask.duration * 60;
+                }
+                appState.timer.intervalId = setInterval(() => {
+                    if (!appState.timer.isOvertime) {
+                        if (appState.timer.secondsRemaining > 0) {
+                            appState.timer.secondsRemaining--;
+                        } else {
+                            appState.timer.isOvertime = true;
+                            appState.timer.overtimeSeconds = 1;
+                        }
+                    } else {
+                        appState.timer.overtimeSeconds++;
+                    }
+                    renderTimerCard(calculateSchedule().find(t => t.id === appState.timer.activeTaskId));
+                }, 1000);
+            }
+            renderApp();
+        }
+
+        function resetTimer() {
+            appState.timer.isRunning = false;
+            if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+            const timeline = calculateSchedule();
+            const activeTask = timeline.find(t => t.id === appState.timer.activeTaskId);
+            if (activeTask) {
+                appState.timer.secondsRemaining = activeTask.duration * 60;
+                appState.timer.isOvertime = false;
+                appState.timer.overtimeSeconds = 0;
+            }
+            renderApp();
+        }
+
+        function completeCurrentTask() {
+            const activeId = appState.timer.activeTaskId;
+            if (!activeId) return;
+
+            const presetId = getCurrentPreset().id;
+            if (!appState.completedTasksToday[presetId]) {
+                appState.completedTasksToday[presetId] = {};
+            }
+            appState.completedTasksToday[presetId][activeId] = true;
+
+            const activeTaskOriginal = getCurrentPreset().tasks.find(t => t.id === activeId);
+            if (activeTaskOriginal) {
+                let elapsedSec = 0;
+                if (appState.timer.isOvertime) {
+                    elapsedSec = (appState.timer.totalSeconds || (activeTaskOriginal.duration * 60)) + appState.timer.overtimeSeconds;
+                } else {
+                    const totalSec = appState.timer.totalSeconds || (activeTaskOriginal.duration * 60);
+                    elapsedSec = totalSec - appState.timer.secondsRemaining;
+                }
+                const elapsedMins = Math.max(1, Math.round(elapsedSec / 60));
+
+                if (!appState.taskActualTimes[presetId]) {
+                    appState.taskActualTimes[presetId] = {};
+                }
+                appState.taskActualTimes[presetId][activeId] = {
+                    actualMinutes: elapsedMins
+                };
+
+                const timelineBefore = calculateSchedule();
+                const currentTaskObj = timelineBefore.find(t => t.id === activeId);
+                if (currentTaskObj && appState.calcMode === 'reverse') {
+                    const nowMins = timeToMins(getCurrentTimeString());
+                    const diff = nowMins - currentTaskObj.endMins;
+                    if (Math.abs(diff) > 1) {
+                        const preset = getCurrentPreset();
+                        const bedMins = timeToMins(preset.bedtime) + diff;
+                        preset.bedtime = minsToTime(bedMins);
+                    }
+                } else if (appState.calcMode === 'forward') {
+                    appState.forwardStartTime = getCurrentTimeString();
+                }
+            }
+
+            appState.timer.isRunning = false;
+            if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+
+            const timeline = calculateSchedule();
+            const nextTask = timeline.find(t => !t.isCompleted);
+            if (nextTask) {
+                appState.timer.activeTaskId = nextTask.id;
+                appState.timer.totalSeconds = nextTask.duration * 60;
+                appState.timer.secondsRemaining = nextTask.duration * 60;
+                appState.timer.isOvertime = false;
+                appState.timer.overtimeSeconds = 0;
+            } else {
+                appState.timer.activeTaskId = null;
+            }
+
+            renderApp();
+            saveState();
+        }
+
+        function resetDailyProgress() {
+            appState.completedTasksToday[getCurrentPreset().id] = {};
+            appState.taskActualTimes[getCurrentPreset().id] = {};
+            appState.timer.isRunning = false;
+            if (appState.timer.intervalId) clearInterval(appState.timer.intervalId);
+            appState.timer.activeTaskId = null;
+            appState.timer.isOvertime = false;
+            appState.timer.overtimeSeconds = 0;
+            renderApp();
+            saveState();
+        }
+
+        let confirmCallback = null;
+        function openConfirmModal(msg, onOk) {
+            document.getElementById('confirm-modal-message').textContent = msg;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+            confirmCallback = onOk;
+        }
+        function closeConfirmModal(isOk) {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            if (isOk && confirmCallback) confirmCallback();
+            confirmCallback = null;
+        }
+
+        function openModal(id) {
+            if (id === 'modal-settings') {
+                renderSettingsModalContent();
+            }
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openSettingsModal() {
+            openModal('modal-settings');
+        }
+
+        function renderSettingsModalContent() {
+            const body = document.getElementById('settings-modal-body');
+            const preset = getCurrentPreset();
+
+            body.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-night-900/60 p-4 rounded-2xl border border-slate-700/60 space-y-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">テーマカラー設定</h4>
+                        <div class="flex items-center gap-3">
+                            <button onclick="changeTheme('amber')" class="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center border-2 ${appState.theme === 'amber' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'} transition-all" title="アンバー（ゴールド）"></button>
+                            <button onclick="changeTheme('cyan')" class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center border-2 ${appState.theme === 'cyan' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'} transition-all" title="シアン（ブルー）"></button>
+                            <button onclick="changeTheme('purple')" class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center border-2 ${appState.theme === 'purple' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'} transition-all" title="パープル"></button>
+                            <button onclick="changeTheme('emerald')" class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center border-2 ${appState.theme === 'emerald' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'} transition-all" title="エメラルド（グリーン）"></button>
+                        </div>
+                    </div>
+
+                    <div class="bg-night-900/60 p-4 rounded-2xl border border-slate-700/60 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">コース選択・切替</h4>
+                            <button onclick="addNewPresetInModal()" class="text-xs px-2.5 py-1 rounded-xl theme-accent-gradient text-slate-950 font-bold">
+                                <i class="fa-solid fa-plus mr-1"></i>新規コース追加
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${appState.presets.map(p => `
+                                <button onclick="switchPreset('${p.id}'); renderSettingsModalContent();" class="px-3 py-1.5 rounded-xl text-xs font-medium border ${p.id === appState.activePresetId ? 'theme-accent-gradient text-slate-950 font-bold border-amber-500' : 'bg-night-800 text-slate-300 border-slate-700'}">
+                                    ${p.name}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-night-900/60 p-4 rounded-2xl border border-slate-700/60 space-y-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">現在コース基本設定</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">コース名</label>
+                                <input type="text" id="settings-preset-name" value="${preset.name}" oninput="updatePresetName('${preset.id}', this.value)" class="w-full bg-night-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">目標就寝時刻</label>
+                                <input type="time" id="settings-bedtime" value="${preset.bedtime}" onchange="updateBedtime('${preset.id}', this.value)" class="w-full bg-night-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200">
+                            </div>
+                        </div>
+                        ${appState.presets.length > 1 ? `
+                            <div class="pt-2 flex justify-end">
+                                <button onclick="deletePreset('${preset.id}')" class="px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 text-xs border border-red-500/30">
+                                    <i class="fa-solid fa-trash mr-1"></i>このコースを削除
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="bg-night-900/60 p-4 rounded-2xl border border-slate-700/60 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">フェーズ＆タスク構成</h4>
+                            <button onclick="addNewPhaseInModal()" class="text-xs px-2.5 py-1 rounded-xl theme-accent-gradient text-slate-950 font-bold">
+                                <i class="fa-solid fa-plus mr-1"></i>フェーズ追加
+                            </button>
+                        </div>
+                        <div class="space-y-4" id="settings-phases-list">
+                            ${preset.phases.map(phase => {
+                                const phaseTasks = preset.tasks.filter(t => t.phaseId === phase.id);
+                                return `
+                                    <div class="bg-night-800 border border-slate-700/80 rounded-xl p-3 space-y-3">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2 flex-1">
+                                                <button onclick="openIconPickerForPhase('${phase.id}')" class="w-8 h-8 rounded-lg bg-night-900 border border-slate-700 text-amber-400 flex items-center justify-center">
+                                                    <i class="fa-solid ${phase.icon || 'fa-moon'}"></i>
+                                                </button>
+                                                <input type="text" value="${phase.title}" oninput="updatePhaseTitle('${phase.id}', this.value)" class="bg-night-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 flex-1">
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <button onclick="openTaskAddModalForPhase('${phase.id}')" class="p-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs" title="タスク追加">
+                                                    <i class="fa-solid fa-plus"></i>
+                                                </button>
+                                                <button onclick="deletePhase('${phase.id}')" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs" title="フェーズ削除">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="pl-4 space-y-1.5 border-l-2 border-slate-700/60">
+                                            ${phaseTasks.map(task => `
+                                                <div class="flex items-center justify-between text-xs bg-night-900/60 p-2 rounded-lg border border-slate-800">
+                                                    <span class="text-slate-200 font-medium">${task.title} <span class="text-slate-400 font-mono">(${task.duration}分)</span></span>
+                                                    <div class="flex items-center gap-1">
+                                                        <button onclick="openTaskEditModal('${task.id}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">編集</button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateBedtime(presetId, val) {
+            const p = appState.presets.find(item => item.id === presetId);
+            if (p) p.bedtime = val;
+            renderApp();
+            saveState();
+        }
+
+        function saveAllSettings() {
+            renderApp();
+            saveState();
+            closeModal('modal-settings');
+        }
+
+        function addNewPresetInModal() {
+            const newId = 'preset_' + Date.now();
+            appState.presets.push({
+                id: newId,
+                name: '新しいナイトコース',
+                bedtime: '23:30',
+                phases: [
+                    { id: 'ph_new_' + Date.now(), title: 'Phase 1: メイン', icon: 'fa-moon', color: 'amber' }
+                ],
+                tasks: [
+                    { id: 'tsk_new_' + Date.now(), phaseId: 'ph_new_' + Date.now(), title: '夜のタスク', duration: 30 }
+                ]
+            });
+            renderSettingsModalContent();
+        }
+
+        function updatePresetName(presetId, val) {
+            const p = appState.presets.find(item => item.id === presetId);
+            if (p) p.name = val;
+        }
+
+        function deletePreset(presetId) {
+            if (appState.presets.length <= 1) return;
+            appState.presets = appState.presets.filter(p => p.id !== presetId);
+            if (appState.activePresetId === presetId) {
+                appState.activePresetId = appState.presets[0].id;
+            }
+            renderSettingsModalContent();
+        }
+
+        function addNewPhaseInModal() {
+            const preset = getCurrentPreset();
+            const newPhId = 'ph_' + Date.now();
+            preset.phases.push({
+                id: newPhId,
+                title: '新しいフェーズ',
+                icon: 'fa-star',
+                color: 'amber'
+            });
+            renderSettingsModalContent();
+        }
+
+        function updatePhaseTitle(phId, val) {
+            const preset = getCurrentPreset();
+            const ph = preset.phases.find(item => item.id === phId);
+            if (ph) ph.title = val;
+        }
+
+        function deletePhase(phId) {
+            const preset = getCurrentPreset();
+            preset.phases = preset.phases.filter(ph => ph.id !== phId);
+            preset.tasks = preset.tasks.filter(t => t.phaseId !== phId);
+            renderSettingsModalContent();
+        }
+
+        let editingPhaseIdForIcon = null;
+        function openIconPickerForPhase(phId) {
+            editingPhaseIdForIcon = phId;
+            const grid = document.getElementById('icon-picker-grid');
+            if (grid) {
+                grid.innerHTML = AVAILABLE_ICONS.map(icon => `
+                    <button type="button" onclick="selectIconForPhase('${icon}')" class="p-3 rounded-xl bg-night-900 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-lg border border-slate-700">
+                        <i class="fa-solid ${icon}"></i>
+                    </button>
+                `).join('');
+            }
+            document.getElementById('modal-icon-picker').classList.remove('hidden');
+        }
+
+        function selectIconForPhase(icon) {
+            if (editingPhaseIdForIcon) {
+                const preset = getCurrentPreset();
+                const ph = preset.phases.find(p => p.id === editingPhaseIdForIcon);
+                if (ph) ph.icon = icon;
+                renderSettingsModalContent();
+            }
+            closeModal('modal-icon-picker');
+        }
+
+        function openTaskAddModalForPhase(phId) {
+            document.getElementById('edit-task-id').value = '';
+            document.getElementById('input-task-title').value = '';
+            document.getElementById('input-task-duration').value = 15;
+            document.getElementById('modal-task-title-label').innerHTML = '<i class="fa-solid fa-plus text-amber-400 mr-2"></i>タスクを追加';
+            document.getElementById('btn-delete-task').classList.add('hidden');
+
+            const preset = getCurrentPreset();
+            const select = document.getElementById('select-task-phase');
+            select.innerHTML = preset.phases.map(p => `<option value="${p.id}" ${p.id === phId ? 'selected' : ''}>${p.title}</option>`).join('');
+
+            document.getElementById('modal-task-edit').classList.remove('hidden');
+        }
+
+        function openTaskEditModal(taskId) {
+            const preset = getCurrentPreset();
+            const task = preset.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('edit-task-id').value = task.id;
+            document.getElementById('input-task-title').value = task.title;
+            document.getElementById('input-task-duration').value = task.duration;
+            document.getElementById('modal-task-title-label').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400 mr-2"></i>タスクを編集';
+            document.getElementById('btn-delete-task').classList.remove('hidden');
+
+            const select = document.getElementById('select-task-phase');
+            select.innerHTML = preset.phases.map(p => `<option value="${p.id}" ${p.id === task.phaseId ? 'selected' : ''}>${p.title}</option>`).join('');
+
+            document.getElementById('modal-task-edit').classList.remove('hidden');
+        }
+
+        function saveTaskEdit() {
+            const taskId = document.getElementById('edit-task-id').value;
+            const title = document.getElementById('input-task-title').value.trim();
+            const duration = parseInt(document.getElementById('input-task-duration').value, 10);
+            const phaseId = document.getElementById('select-task-phase').value;
+
+            if (!title || isNaN(duration) || duration <= 0) return;
+
+            const preset = getCurrentPreset();
+            if (taskId) {
+                const task = preset.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.title = title;
+                    task.duration = duration;
+                    task.phaseId = phaseId;
+                }
+            } else {
+                const newId = 't_' + Date.now();
+                preset.tasks.push({
+                    id: newId,
+                    phaseId,
+                    title,
+                    duration
+                });
+            }
+
+            renderApp();
+            if (!document.getElementById('modal-settings').classList.contains('hidden')) {
+                renderSettingsModalContent();
+            }
+            saveState();
+            closeModal('modal-task-edit');
+        }
+
+        function deleteTaskFromModal() {
+            const taskId = document.getElementById('edit-task-id').value;
+            if (!taskId) return;
+
+            const preset = getCurrentPreset();
+            preset.tasks = preset.tasks.filter(t => t.id !== taskId);
+
+            renderApp();
+            if (!document.getElementById('modal-settings').classList.contains('hidden')) {
+                renderSettingsModalContent();
+            }
+            saveState();
+            closeModal('modal-task-edit');
+        }
+
+        function resetAllData() {
+            openConfirmModal("すべての設定とデータを初期状態に戻しますか？", () => {
+                localStorage.removeItem(STORAGE_KEY);
+                appState.presets = JSON.parse(JSON.stringify(DEFAULT_PRESETS));
+                appState.activePresetId = 'standard';
+                appState.completedTasksToday = {};
+                appState.taskActualTimes = {};
+                applyTheme('amber');
+                renderApp();
+                closeModal('modal-settings');
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if (appState.viewMode === 'auto') {
+                const wrapper = document.getElementById('app-viewport-wrapper');
+                if (window.innerWidth < 1024) wrapper.classList.add('view-wrapper-mobile');
+                else wrapper.classList.remove('view-wrapper-mobile', 'view-wrapper-pc');
+            }
+        });
+
+        window.onload = function() {
+            loadState();
+            applyTheme(appState.theme);
+            setViewMode(appState.viewMode);
+            renderApp();
+        };
+    </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
